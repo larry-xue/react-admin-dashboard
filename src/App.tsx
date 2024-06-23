@@ -2,13 +2,17 @@ import React from 'react';
 import PageLayout from './components/layout';
 import { ConfigProvider } from 'antd';
 import useConfigStore from './store/config';
+import { useNavigate } from 'react-router-dom';
 
 const App: React.FC = () => {
   const theme = useConfigStore(state => state.themeConfig)
+  const navigate = useNavigate()
 
   // TODO: refactor this logic
   if (window.location.pathname === '/') {
-    window.location.href = '/demo/table'
+    setTimeout(() => {
+      navigate('/demo/table')
+    })
   }
 
   return (
