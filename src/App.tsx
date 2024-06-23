@@ -1,5 +1,5 @@
 import React from 'react';
-import PageLayout from './package/layout';
+import PageLayout from './components/layout';
 
 const App: React.FC = () => (
   <PageLayout />
