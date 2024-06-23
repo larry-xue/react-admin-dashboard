@@ -40,10 +40,8 @@ export const routes: AdminRouterItem[] = [
   ...await loadRouteModules()
 ]
 
-console.log('routes = ', routes)
-
 export default createBrowserRouter([{
   path: "/",
   element: <App />,
-  children: routes
+  children: routes,
 }])

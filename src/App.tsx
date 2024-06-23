@@ -6,6 +6,11 @@ import useConfigStore from './store/config';
 const App: React.FC = () => {
   const theme = useConfigStore(state => state.themeConfig)
 
+  // TODO: refactor this logic
+  if (window.location.pathname === '/') {
+    window.location.href = '/demo/table'
+  }
+
   return (
     <ConfigProvider theme={{
       algorithm: theme.algorithm,
