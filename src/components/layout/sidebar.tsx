@@ -29,7 +29,6 @@ const PageSidebar = (props: {
   autoCollapse?: boolean
 }) => {
   const { autoCollapse = true } = props
-  const [collapsed, setCollapsed] = useState(false);
   const menuItems = getMenuItems(routes)
   const navigate = useNavigate()
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
@@ -47,12 +46,11 @@ const PageSidebar = (props: {
 
   useEffect(() => {
     setSelectedKeys([`${location.pathname}`])
-    // setLastOpenedMenu([`${location.pathname}`])
     navigate(location.pathname)
   }, [location.pathname])
 
   return (
-    <Sider theme='light' collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+    <Sider theme='light'>
       <Menu openKeys={lastOpenedMenu} onOpenChange={onOpenChange} selectedKeys={selectedKeys} mode="inline" items={menuItems} onClick={onSwitchMenu} />
     </Sider>
   )
