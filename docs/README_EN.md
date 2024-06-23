@@ -35,7 +35,7 @@ npm run build
 # Todos
 
 - [ ] Support login, registration, and permission management.
-- [ ] Theme switching support.
+- [x] Theme switching support.
 - [ ] Improve documentation.
 - [ ] Encapsulate state management.
 - [ ] Support internationalization.

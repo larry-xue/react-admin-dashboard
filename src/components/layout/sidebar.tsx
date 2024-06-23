@@ -27,6 +27,7 @@ const getMenuItems = (routes: AdminRouterItem[]): any[] => {
  */
 const PageSidebar = (props: {
   autoCollapse?: boolean
+  theme?: string
 }) => {
   const { autoCollapse = true } = props
   const [collapsed, setCollapsed] = useState(false);
@@ -53,7 +54,7 @@ const PageSidebar = (props: {
   return (
     <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
       <div className="demo-logo-vertical" />
-      <Menu theme="dark" openKeys={lastOpenedMenu} onOpenChange={onOpenChange} inlineCollapsed={false} selectedKeys={selectedKeys} mode="inline" items={menuItems} onClick={onSwitchMenu} />
+      <Menu theme="dark" openKeys={lastOpenedMenu} onOpenChange={onOpenChange} selectedKeys={selectedKeys} mode="inline" items={menuItems} onClick={onSwitchMenu} />
     </Sider>
   )
 }
