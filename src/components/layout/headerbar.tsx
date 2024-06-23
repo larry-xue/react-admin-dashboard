@@ -9,7 +9,7 @@ const Headerbar = (props: { colorBgContainer: string }) => {
         <h2>React Admin Dashboard</h2>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <p style={{ marginRight: 10 }}>Larry Xue</p>
-          <img src="https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png" alt="avatar" style={{ width: 40, height: 40 }} />
+          <img src="https://avatars.githubusercontent.com/u/48818060?s=48&v=4" alt="avatar" style={{ width: 40, height: 40 }} />
         </div>
       </div>
     </Header>
