@@ -27,7 +27,6 @@ const getMenuItems = (routes: AdminRouterItem[]): any[] => {
  */
 const PageSidebar = (props: {
   autoCollapse?: boolean
-  theme?: string
 }) => {
   const { autoCollapse = true } = props
   const [collapsed, setCollapsed] = useState(false);
@@ -48,13 +47,13 @@ const PageSidebar = (props: {
 
   useEffect(() => {
     setSelectedKeys([`${location.pathname}`])
+    // setLastOpenedMenu([`${location.pathname}`])
     navigate(location.pathname)
   }, [location.pathname])
 
   return (
-    <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
-      <div className="demo-logo-vertical" />
-      <Menu theme="dark" openKeys={lastOpenedMenu} onOpenChange={onOpenChange} selectedKeys={selectedKeys} mode="inline" items={menuItems} onClick={onSwitchMenu} />
+    <Sider theme='light' collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+      <Menu openKeys={lastOpenedMenu} onOpenChange={onOpenChange} selectedKeys={selectedKeys} mode="inline" items={menuItems} onClick={onSwitchMenu} />
     </Sider>
   )
 }
