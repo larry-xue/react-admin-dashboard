@@ -8,7 +8,7 @@
 - 内置的 Layout 组件，包含 Sidebar、Header、Content、Breadcrumb 和 Footer。
 - 基于文件名的路由自动导入，支持多级路由嵌套。
 
-> 项目预览地址：[https://react-admin-dashboard-8qpbfkq7s-larryxues-projects.vercel.app/](https://react-admin-dashboard-8qpbfkq7s-larryxues-projects.vercel.app/)
+> 项目预览地址：[https://react-admin-dashboard-gamma-six.vercel.app/](https://react-admin-dashboard-gamma-six.vercel.app/)
 
 > [README in English](./docs/README_EN.md)
 

@@ -8,9 +8,9 @@ Key features of the project include:
 - Built-in Layout components including Sidebar, Header, Content, Breadcrumb, and Footer.
 - Automatic route importing based on filenames, supporting nested routes.
 
-Project preview link: [https://react-admin-dashboard-8qpbfkq7s-larryxues-projects.vercel.app/](https://react-admin-dashboard-8qpbfkq7s-larryxues-projects.vercel.app/)
+Project preview link: [https://react-admin-dashboard-gamma-six.vercel.app/](https://react-admin-dashboard-gamma-six.vercel.app/)
 
-[中文README](./README.md)
+[中文README](../README.md)
 
 ## How to Use
 
