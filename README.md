@@ -10,8 +10,6 @@ Key features of the project include:
 
 Project preview link: [https://react-admin-dashboard-gamma-six.vercel.app/](https://react-admin-dashboard-gamma-six.vercel.app/)
 
-[中文README](../README.md)
-
 ## How to Use
 
 ### Environment Setup
