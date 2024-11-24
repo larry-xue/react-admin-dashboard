@@ -1,44 +1,42 @@
 # React Admin Dashboard
 
-这是一个基于 React 18 + TypeScript + Vite 5 + Ant Design v5 + React Router v6 + Zustand v4 开发的 React 后台管理模板项目。
+This is a React admin template project developed with React 18 + TypeScript + Vite 5 + Ant Design v5 + React Router v6 + Zustand v4.
 
-项目主要特点包括：
+Key features of the project include:
 
-- 提供即开即用的开发体验。
-- 内置的 Layout 组件，包含 Sidebar、Header、Content、Breadcrumb 和 Footer。
-- 基于文件名的路由自动导入，支持多级路由嵌套。
+- Out-of-the-box development experience.
+- Built-in Layout components including Sidebar, Header, Content, Breadcrumb, and Footer.
+- Automatic route importing based on filenames, supporting nested routes.
 
-> 项目预览地址：[https://react-admin-dashboard-gamma-six.vercel.app/](https://react-admin-dashboard-gamma-six.vercel.app/)
+Project preview link: [https://react-admin-dashboard-gamma-six.vercel.app/](https://react-admin-dashboard-gamma-six.vercel.app/)
 
-> [README in English](./docs/README_EN.md)
+[中文README](../README.md)
 
-## 如何使用
+## How to Use
 
-### 环境准备
+### Environment Setup
 
-确保你的 Node.js 版本为 18+ 或 20+，以支持 Vite v5。
+Ensure your Node.js version is 18+ or 20+ to support Vite v5.
 
-## 安装
+## Installation
 
 ```sh
 git clone https://github.com/larry-xue/react-admin-dashboard
 cd react-admin-dashboard
 npm install
 
-# 本地启动
+# Local development
 npm run dev
 
-# 打包
+# Build
 npm run build
 ```
 
 # Todos
 
-- [ ] 支持登录注册、权限管理。
-- [x] 支持主题切换。
-- [ ] 完善使用文档。
-- [ ] 封装状态管理。
-- [ ] 支持国际化。
-- [ ] 适配不同屏幕。
+- [ ] Support login, registration, and permission management.
+- [x] Theme switching support.
+- [ ] Improve documentation.
+- [ ] Encapsulate state management.
 
 ---
