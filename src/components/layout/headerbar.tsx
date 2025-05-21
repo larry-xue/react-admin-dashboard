@@ -15,7 +15,7 @@ const Headerbar = (props: { colorBgContainer: string }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Switch checkedChildren="Light" unCheckedChildren="Dark" defaultChecked onChange={(checked) => setAlgorithm(checked ? 'default' : 'dark')} />
           <Switch checkedChildren="Compact" unCheckedChildren="Loose" onChange={(checked) => setCompactAlgorithm(checked ? 'compact' : '')} />
-          <a target="_blank" href="https://larryxue.dev" style={{ marginRight: 10 }}>Yujian Xue</p>
+          <a target="_blank" href="https://larryxue.dev" style={{ marginRight: 10 }}>Yujian Xue</a>
           <img src="https://avatars.githubusercontent.com/u/48818060?s=48&v=4" alt="avatar" style={{ width: 40, height: 40 }} />
           <GithubOutlined style={{ fontSize: 30 }} onClick={() => window.open('https://github.com/larry-xue/react-admin-dashboard')} />
         </div>
