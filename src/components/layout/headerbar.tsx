@@ -60,6 +60,7 @@ const Headerbar = (props: HeaderbarProps) => {
       key: 'profile',
       label: 'Profile',
       icon: <UserOutlined />,
+      onClick: () => navigate('/profile'),
     },
     {
       type: 'divider',

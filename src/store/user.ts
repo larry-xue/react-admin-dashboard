@@ -6,6 +6,17 @@ export interface User {
   username: string
   email: string
   avatar?: string
+  fullName?: string
+  title?: string
+  department?: string
+  phone?: string
+  location?: string
+  timezone?: string
+  language?: string
+  bio?: string
+  emailNotifications?: boolean
+  productUpdates?: boolean
+  twoFactorEnabled?: boolean
   [key: string]: unknown
 }
 
@@ -85,4 +96,3 @@ const useUserStore = create<UserState & UserActions>()(
 )
 
 export default useUserStore
-
