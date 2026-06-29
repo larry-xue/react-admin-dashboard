@@ -6,5 +6,6 @@ export default defineConfig({
   plugins: [react()],
   build: {
     target: "esnext",
+    chunkSizeWarningLimit: 700,
   }
 })

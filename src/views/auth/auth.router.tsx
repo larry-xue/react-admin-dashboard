@@ -1,12 +1,19 @@
+import { lazy } from 'react'
 import { LoginOutlined, UserAddOutlined } from '@ant-design/icons'
 import { AdminRouterItem } from '../../router'
-import LoginPage from './login'
-import RegisterPage from './register'
+import LazyRoute from '../../components/common/LazyRoute'
+
+const LoginPage = lazy(() => import('./login'))
+const RegisterPage = lazy(() => import('./register'))
 
 const authRoutes: AdminRouterItem[] = [
   {
     path: 'auth/login',
-    element: <LoginPage />,
+    element: (
+      <LazyRoute>
+        <LoginPage />
+      </LazyRoute>
+    ),
     meta: {
       label: 'Login',
       title: 'Login',
@@ -17,7 +24,11 @@ const authRoutes: AdminRouterItem[] = [
   },
   {
     path: 'auth/register',
-    element: <RegisterPage />,
+    element: (
+      <LazyRoute>
+        <RegisterPage />
+      </LazyRoute>
+    ),
     meta: {
       label: 'Register',
       title: 'Register',
@@ -29,4 +40,3 @@ const authRoutes: AdminRouterItem[] = [
 ]
 
 export default authRoutes
-

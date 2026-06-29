@@ -1,11 +1,18 @@
+import { lazy } from 'react'
 import { DashboardOutlined } from '@ant-design/icons'
 import { AdminRouterItem } from '../../router'
-import DashboardPage from '.'
+import LazyRoute from '../../components/common/LazyRoute'
+
+const DashboardPage = lazy(() => import('.'))
 
 const dashboardRoutes: AdminRouterItem[] = [
   {
     path: 'dashboard',
-    element: <DashboardPage />,
+    element: (
+      <LazyRoute>
+        <DashboardPage />
+      </LazyRoute>
+    ),
     meta: {
       label: 'Dashboard',
       title: 'Dashboard',
@@ -17,4 +24,3 @@ const dashboardRoutes: AdminRouterItem[] = [
 ]
 
 export default dashboardRoutes
-

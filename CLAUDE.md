@@ -1,16 +1,15 @@
 # React Admin Dashboard
 
-React admin template with React 18, TypeScript, Vite 5, Ant Design v5, React Router v6, and Zustand v4.
+React admin template with React 19, TypeScript 6, Vite 8, Ant Design v6, React Router v7, and Zustand v5.
 
 ## Tech Stack
 
-- React 18.3.1
-- TypeScript 5.2.2
-- Vite 5.3.1
-- Ant Design 5.18.3
-- React Router 6.23.1
-- Zustand 4.5.2
-- Ant Design Charts 2.2.3
+- React 19.2.7
+- TypeScript 6.0.3
+- Vite 8.1.0
+- Ant Design 6.5.0
+- React Router 7.18.0
+- Zustand 5.0.14
 
 ## Project Structure
 
@@ -62,8 +61,7 @@ Zustand stores in `src/store/`:
 
 ## Development
 
-- Node.js 18+ or 20+ required
+- Node.js 20.19+ or 22.12+ required
 - Routes: Create `*.router.tsx` files in `views/` directories
 - Layout: Components in `src/components/layout/`
 - State: Add Zustand stores in `src/store/`
-

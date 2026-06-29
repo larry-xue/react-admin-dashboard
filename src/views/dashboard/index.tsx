@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Line, Pie } from '@ant-design/charts'
 import { ArrowUpOutlined, FireOutlined, TeamOutlined } from '@ant-design/icons'
 import { Card, Col, List, Row, Skeleton, Space, Statistic, Tag, Typography, theme } from 'antd'
-import useConfigStore from '../../store/config'
 import type { DashboardStats } from '../../utils/mockData'
 import { getDashboardStats } from '../../utils/mockData'
 import { CustomerStatus } from '../customers/types'
@@ -21,12 +19,97 @@ const statusColorMap: Record<CustomerStatus, string> = {
   [CustomerStatus.Churned]: 'error',
 }
 
+type AntdToken = ReturnType<typeof theme.useToken>['token']
+
+const formatCurrency = (value: number) => `¥${value.toLocaleString()}`
+
+const RevenueTrendChart = ({
+  data,
+  token,
+}: {
+  data: DashboardStats['revenueTrend']
+  token: AntdToken
+}) => {
+  const width = 640
+  const height = 320
+  const padding = { top: 18, right: 24, bottom: 38, left: 64 }
+  const plotWidth = width - padding.left - padding.right
+  const plotHeight = height - padding.top - padding.bottom
+  const maxRevenue = Math.max(...data.map(item => item.revenue), 1)
+  const points = data.map((item, index) => {
+    const x = padding.left + (index / Math.max(data.length - 1, 1)) * plotWidth
+    const y = padding.top + (1 - item.revenue / maxRevenue) * plotHeight
+    return { ...item, x, y }
+  })
+  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
+  const lastPoint = points[points.length - 1]
+  const areaPath = `${path} L ${lastPoint?.x ?? padding.left} ${padding.top + plotHeight} L ${padding.left} ${padding.top + plotHeight} Z`
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Revenue trend over the last six months" style={{ width: '100%', height }}>
+      {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+        const y = padding.top + ratio * plotHeight
+        const value = Math.round(maxRevenue * (1 - ratio))
+
+        return (
+          <g key={ratio}>
+            <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke={token.colorSplit} strokeDasharray="4 4" />
+            <text x={padding.left - 12} y={y + 4} textAnchor="end" fill={token.colorTextSecondary} fontSize="12">
+              {formatCurrency(value)}
+            </text>
+          </g>
+        )
+      })}
+      <path d={areaPath} fill={token.colorPrimaryBg} opacity={0.85} />
+      <path d={path} fill="none" stroke={token.colorPrimary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      {points.map(point => (
+        <g key={point.month}>
+          <circle cx={point.x} cy={point.y} r={4} fill={token.colorBgContainer} stroke={token.colorPrimary} strokeWidth={2} />
+          <text x={point.x} y={height - 12} textAnchor="middle" fill={token.colorTextSecondary} fontSize="12">
+            {point.month}
+          </text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+const CustomerSourceBreakdown = ({
+  data,
+  token,
+}: {
+  data: DashboardStats['sourceDistribution']
+  token: AntdToken
+}) => {
+  const total = data.reduce((sum, item) => sum + item.value, 0)
+  const palette = [token.colorPrimary, token.colorSuccess, token.colorWarning, token.colorInfo, token.colorError]
+
+  return (
+    <Space direction="vertical" size="middle" style={{ width: '100%', minHeight: 320, justifyContent: 'center' }}>
+      {data.map((item, index) => {
+        const percent = total > 0 ? Math.round((item.value / total) * 100) : 0
+        const color = palette[index % palette.length]
+
+        return (
+          <div key={item.type}>
+            <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 6 }}>
+              <Typography.Text strong>{item.type}</Typography.Text>
+              <Typography.Text type="secondary">{item.value} · {percent}%</Typography.Text>
+            </Space>
+            <div style={{ height: 10, overflow: 'hidden', borderRadius: 999, background: token.colorFillSecondary }}>
+              <div style={{ width: `${percent}%`, height: '100%', borderRadius: 999, background: color }} />
+            </div>
+          </div>
+        )
+      })}
+    </Space>
+  )
+}
+
 const DashboardPage = () => {
   const [stats, setStats] = useState<DashboardStats>()
   const [loading, setLoading] = useState(true)
   const { token } = theme.useToken()
-  const algorithms = useConfigStore(state => state.themeConfig._algorithm)
-  const isDarkMode = algorithms.includes('dark')
 
   useEffect(() => {
     let mounted = true
@@ -86,8 +169,6 @@ const DashboardPage = () => {
     borderRadius: token.borderRadiusLG,
   }
 
-  const chartThemeConfig = isDarkMode ? { theme: 'classicDark' } : { theme: 'classic' }
-
   if (loading && !stats) {
     return <Skeleton active paragraph={{ rows: 12 }} />
   }
@@ -118,30 +199,7 @@ const DashboardPage = () => {
         <Col xs={24} lg={16}>
           <Card title="Revenue Trend" extra={<Typography.Text type="secondary">Last 6 months</Typography.Text>}>
             {stats ? (
-              <Line
-                data={stats.revenueTrend}
-                xField="month"
-                yField="revenue"
-                smooth
-                height={320}
-                point={{ sizeField: 5 }}
-                xAxis={{
-                  label: { style: { fill: token.colorTextSecondary } },
-                  line: { style: { stroke: token.colorBorderSecondary } },
-                  tickLine: { style: { stroke: token.colorBorderSecondary } },
-                }}
-                yAxis={{
-                  label: { style: { fill: token.colorTextSecondary } },
-                  grid: { line: { style: { stroke: token.colorSplit, lineDash: [4, 4] } } },
-                }}
-                tooltip={{
-                  formatter: (datum: { revenue: number }) => ({
-                    name: 'Revenue',
-                    value: `¥${datum.revenue.toLocaleString()}`,
-                  }),
-                }}
-                {...chartThemeConfig}
-              />
+              <RevenueTrendChart data={stats.revenueTrend} token={token} />
             ) : (
               <Skeleton active />
             )}
@@ -150,22 +208,7 @@ const DashboardPage = () => {
         <Col xs={24} lg={8}>
           <Card title="Customer Sources">
             {stats ? (
-              <Pie
-                data={stats.sourceDistribution}
-                angleField="value"
-                colorField="type"
-                innerRadius={0.5}
-                height={320}
-                legend={{
-                  position: 'bottom',
-                  itemName: { style: { fill: token.colorTextSecondary } },
-                }}
-                label={{
-                  text: 'value',
-                  style: { fontWeight: 600, fill: token.colorText },
-                }}
-                {...chartThemeConfig}
-              />
+              <CustomerSourceBreakdown data={stats.sourceDistribution} token={token} />
             ) : (
               <Skeleton active />
             )}
@@ -230,4 +273,3 @@ const DashboardPage = () => {
 }
 
 export default DashboardPage
-

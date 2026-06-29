@@ -1,6 +1,6 @@
 import { Breadcrumb } from 'antd'
 import type { BreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { matchPath, useMatches } from 'react-router-dom'
 import type { AdminRouterItem } from '../../router'
 import { routes } from '../../router'
@@ -42,23 +42,22 @@ const fallbackTitle = (pathname: string) => {
     .replace(/\b\w/g, char => char.toUpperCase())
 }
 
-const PageBreadcrumb: React.FC = () => {
+const PageBreadcrumb = () => {
   const matches = useMatches()
   const flattenedRoutes = useMemo(() => flattenRoutes(routes), [])
-  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItemType[]>([])
-
-  useEffect(() => {
-    setBreadcrumbs(
+  const breadcrumbs = useMemo<BreadcrumbItemType[]>(
+    () =>
       matches.map(match => {
         const found = flattenedRoutes.find(route =>
           matchPath({ path: route.pattern, end: true }, match.pathname),
         )
+
         return {
           title: found?.title ?? fallbackTitle(match.pathname),
         }
       }),
-    )
-  }, [matches, flattenedRoutes])
+    [matches, flattenedRoutes],
+  )
 
   return <Breadcrumb style={{ margin: '16px 20px' }} items={breadcrumbs} />
 }

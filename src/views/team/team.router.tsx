@@ -1,14 +1,21 @@
+import { lazy } from 'react'
 import { TeamOutlined, SafetyOutlined, SettingOutlined } from '@ant-design/icons'
 import type { AdminRouterItem } from '../../router'
-import TeamLayout from './teamLayout'
-import RolesPage from './roles'
-import RoleDetailPage from './roles/detail'
-import RolePermissionsPage from './roles/permissions'
+import LazyRoute from '../../components/common/LazyRoute'
+
+const TeamLayout = lazy(() => import('./teamLayout'))
+const RolesPage = lazy(() => import('./roles'))
+const RoleDetailPage = lazy(() => import('./roles/detail'))
+const RolePermissionsPage = lazy(() => import('./roles/permissions'))
 
 const teamRoutes: AdminRouterItem[] = [
   {
     path: 'team',
-    element: <TeamLayout />,
+    element: (
+      <LazyRoute>
+        <TeamLayout />
+      </LazyRoute>
+    ),
     meta: {
       label: 'Team',
       title: 'Team',
@@ -19,7 +26,11 @@ const teamRoutes: AdminRouterItem[] = [
     children: [
       {
         path: 'roles',
-        element: <RolesPage />,
+        element: (
+          <LazyRoute>
+            <RolesPage />
+          </LazyRoute>
+        ),
         meta: {
           label: 'Roles',
           title: 'Roles',
@@ -29,7 +40,11 @@ const teamRoutes: AdminRouterItem[] = [
       },
       {
         path: 'role/:roleId',
-        element: <RoleDetailPage />,
+        element: (
+          <LazyRoute>
+            <RoleDetailPage />
+          </LazyRoute>
+        ),
         meta: {
           label: 'Role Detail',
           title: 'Role Detail',
@@ -40,7 +55,11 @@ const teamRoutes: AdminRouterItem[] = [
       },
       {
         path: 'role/:roleId/permissions',
-        element: <RolePermissionsPage />,
+        element: (
+          <LazyRoute>
+            <RolePermissionsPage />
+          </LazyRoute>
+        ),
         meta: {
           label: 'Permissions',
           title: 'Role Permissions',
@@ -54,4 +73,3 @@ const teamRoutes: AdminRouterItem[] = [
 ]
 
 export default teamRoutes
-

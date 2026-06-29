@@ -1,11 +1,18 @@
+import { lazy } from 'react'
 import { TeamOutlined } from '@ant-design/icons'
 import { AdminRouterItem } from '../../router'
-import CustomersPage from '.'
+import LazyRoute from '../../components/common/LazyRoute'
+
+const CustomersPage = lazy(() => import('.'))
 
 const customersRoutes: AdminRouterItem[] = [
   {
     path: 'customers',
-    element: <CustomersPage />,
+    element: (
+      <LazyRoute>
+        <CustomersPage />
+      </LazyRoute>
+    ),
     meta: {
       label: 'Customers',
       title: 'Customers',
@@ -17,4 +24,3 @@ const customersRoutes: AdminRouterItem[] = [
 ]
 
 export default customersRoutes
-

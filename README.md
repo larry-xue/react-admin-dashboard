@@ -1,11 +1,11 @@
 # React Admin Dashboard
 
-> Production-ready SaaS admin template built with React 18, TypeScript, Vite 5, and Ant Design v5.
+> Production-ready SaaS admin template built with React 19, TypeScript 6, Vite 8, and Ant Design v6.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://react-admin-dashboard-gamma-six.vercel.app/)
-[![React](https://img.shields.io/badge/React-18.3-blue)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.3-purple)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-19.2-blue)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.1-purple)](https://vite.dev/)
 
 ---
 
@@ -13,13 +13,13 @@
 
 | Why it matters | How it helps |
 | --- | --- |
-| ⚡️ Modern stack | React 18 + Vite 5 + TypeScript 5 = instant HMR and full type safety |
-| 🎨 Polished UI | Ant Design v5 components, theme switcher, and adaptive layouts |
+| ⚡️ Modern stack | React 19 + Vite 8 + TypeScript 6 = instant HMR and full type safety |
+| 🎨 Polished UI | Ant Design v6 components, theme switcher, and adaptive layouts |
 | 🔐 Real workflows | Auth, protected routes, SaaS dashboard, and customer lifecycle management |
-| 🧱 Strong DX | File-based routing, Zustand stores, mock APIs, and zero-config startup |
+| 🧱 Strong DX | File-based routing, lazy route loading, Zustand stores, mock APIs, and zero-config startup |
 
 ### SaaS Demo Modules
-- **Dashboard** – KPI cards, revenue trend chart, customer source breakdown, and automated health insights
+- **Dashboard** – KPI cards, lightweight revenue trend chart, customer source breakdown, and automated health insights
 - **Customers** – Advanced filtering, ownership, status transitions, detail drawer, and activity timeline
 - **Team Roles** – Nested role listing, detailed role insights, and permission matrix editor
 
@@ -29,14 +29,13 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| React | 18.3.1 | UI Framework |
-| TypeScript | 5.2.2 | Type Safety |
-| Vite | 5.3.1 | Build Tool |
-| Ant Design | 5.18.3 | UI Components |
-| Ant Design Charts | 2.2.3 | Data Visualization |
-| React Router | 6.23.1 | Routing |
-| Zustand | 4.5.2 | State Management |
-| Axios | 1.13.2 | HTTP Client |
+| React | 19.2.7 | UI Framework |
+| TypeScript | 6.0.3 | Type Safety |
+| Vite | 8.1.0 | Build Tool |
+| Ant Design | 6.5.0 | UI Components |
+| React Router | 7.18.0 | Routing |
+| Zustand | 5.0.14 | State Management |
+| Axios | 1.18.1 | HTTP Client |
 
 ---
 
@@ -65,8 +64,8 @@ src/
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ or 20+
-- npm / pnpm / yarn (examples use npm)
+- Node.js 20.19+ or 22.12+
+- npm
 
 ### Installation
 
