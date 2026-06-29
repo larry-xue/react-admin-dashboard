@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpOutlined, FireOutlined, TeamOutlined } from '@ant-design/icons'
-import { Card, Col, List, Row, Skeleton, Space, Statistic, Tag, Typography, theme } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowUpOutlined, FireOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Col, Empty, List, Row, Skeleton, Space, Statistic, Tag, Typography, theme } from 'antd'
 import type { DashboardStats } from '../../utils/mockData'
 import { getDashboardStats } from '../../utils/mockData'
 import { CustomerStatus } from '../customers/types'
@@ -30,6 +30,10 @@ const RevenueTrendChart = ({
   data: DashboardStats['revenueTrend']
   token: AntdToken
 }) => {
+  if (data.length === 0) {
+    return <Empty description="No revenue trend data yet." style={{ minHeight: 320, paddingTop: 96 }} />
+  }
+
   const width = 640
   const height = 320
   const padding = { top: 18, right: 24, bottom: 38, left: 64 }
@@ -81,6 +85,10 @@ const CustomerSourceBreakdown = ({
   data: DashboardStats['sourceDistribution']
   token: AntdToken
 }) => {
+  if (data.length === 0) {
+    return <Empty description="No customer source data yet." style={{ minHeight: 320, paddingTop: 96 }} />
+  }
+
   const total = data.reduce((sum, item) => sum + item.value, 0)
   const palette = [token.colorPrimary, token.colorSuccess, token.colorWarning, token.colorInfo, token.colorError]
 
@@ -109,28 +117,30 @@ const CustomerSourceBreakdown = ({
 const DashboardPage = () => {
   const [stats, setStats] = useState<DashboardStats>()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>()
   const { token } = theme.useToken()
 
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      setLoading(true)
-      try {
-        const nextStats = await getDashboardStats()
-        if (mounted) {
-          setStats(nextStats)
-        }
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-    load()
-    const timer = setInterval(load, 1000 * 60 * 5)
-    return () => {
-      mounted = false
-      clearInterval(timer)
+  const loadStats = useCallback(async () => {
+    setLoading(true)
+    setError(undefined)
+    try {
+      const nextStats = await getDashboardStats()
+      setStats(nextStats)
+    } catch (loadError) {
+      console.error(loadError)
+      setError('Failed to load dashboard metrics. Check the data source and try again.')
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    loadStats()
+    const timer = setInterval(loadStats, 1000 * 60 * 5)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [loadStats])
 
   const metricCards = useMemo(() => ([
     {
@@ -175,6 +185,19 @@ const DashboardPage = () => {
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      {error && (
+        <Alert
+          type="error"
+          showIcon
+          message={error}
+          action={
+            <Button size="small" icon={<ReloadOutlined />} onClick={loadStats}>
+              Retry
+            </Button>
+          }
+        />
+      )}
+
       <Row gutter={[16, 16]}>
         {metricCards.map(card => (
           <Col key={card.title} xs={24} sm={12} lg={6}>
@@ -221,6 +244,7 @@ const DashboardPage = () => {
           <Card title="Recent Activity">
             <List
               dataSource={stats?.recentActivities ?? []}
+              locale={{ emptyText: 'No recent activity yet.' }}
               renderItem={activity => (
                 <List.Item>
                   <List.Item.Meta

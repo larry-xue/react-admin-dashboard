@@ -1,9 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Card, DatePicker, Form, Input, Select, Space, Table, Tag, Typography, message } from 'antd'
+import type { Key } from 'react'
+import {
+  Alert,
+  Button,
+  Card,
+  DatePicker,
+  Empty,
+  Form,
+  Input,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Customer, CustomerFilters, CustomerSource, CustomerStatus } from './types'
-import { createCustomer, deleteCustomer, getCustomers, updateCustomer } from '../../utils/mockData'
+import {
+  bulkAssignCustomerOwner,
+  bulkDeleteCustomers,
+  bulkUpdateCustomerStatus,
+  createCustomer,
+  deleteCustomer,
+  getCustomers,
+  updateCustomer,
+} from '../../utils/mockData'
 import CustomerForm from './components/CustomerForm'
 import CustomerDetail from './components/CustomerDetail'
 
@@ -38,6 +62,7 @@ const sourceOptions = Object.values(CustomerSource).map(source => ({
 }))
 
 const CustomersPage = () => {
+  const [filterForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [filters, setFilters] = useState<CustomerFilters>({})
@@ -46,15 +71,22 @@ const CustomersPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer>()
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 })
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [bulkStatus, setBulkStatus] = useState<CustomerStatus>()
+  const [bulkOwner, setBulkOwner] = useState('')
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
+  const [error, setError] = useState<string>()
 
   const loadCustomers = async () => {
     setLoading(true)
+    setError(undefined)
     try {
       const data = await getCustomers()
       setCustomers(data)
-    } catch (error) {
-      console.error(error)
-      message.error('Failed to load customers. Please try again later.')
+    } catch (loadError) {
+      console.error(loadError)
+      setError('Failed to load customers. Check the data source and try again.')
+      message.error('Failed to load customers.')
     } finally {
       setLoading(false)
     }
@@ -63,6 +95,10 @@ const CustomersPage = () => {
   useEffect(() => {
     loadCustomers()
   }, [])
+
+  const hasActiveFilters = Boolean(
+    filters.keyword || filters.status?.length || filters.source?.length || filters.dateRange,
+  )
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(customer => {
@@ -90,18 +126,27 @@ const CustomersPage = () => {
     })
   }, [customers, filters])
 
-  const paginatedData = useMemo(() => {
-    const start = (pagination.current - 1) * pagination.pageSize
-    return filteredCustomers.slice(start, start + pagination.pageSize)
-  }, [filteredCustomers, pagination])
+  const openCreateForm = () => {
+    setFormMode('create')
+    setSelectedCustomer(undefined)
+    setFormVisible(true)
+  }
+
+  const resetFilters = () => {
+    filterForm.resetFields()
+    setFilters({})
+    setSelectedRowKeys([])
+    setPagination(prev => ({ ...prev, current: 1 }))
+  }
 
   const handleDelete = async (record: Customer) => {
     try {
       await deleteCustomer(record.id)
       message.success('Customer deleted')
-      loadCustomers()
-    } catch (error) {
-      console.error(error)
+      setSelectedRowKeys(keys => keys.filter(key => key !== record.id))
+      await loadCustomers()
+    } catch (deleteError) {
+      console.error(deleteError)
       message.error('Failed to delete customer. Please try again later.')
     }
   }
@@ -110,11 +155,66 @@ const CustomersPage = () => {
     try {
       await updateCustomer(record.id, { status })
       message.success('Status updated')
-      loadCustomers()
-    } catch (error) {
-      console.error(error)
+      await loadCustomers()
+    } catch (statusError) {
+      console.error(statusError)
       message.error('Failed to update status. Please try again later.')
     }
+  }
+
+  const runBulkAction = async (action: () => Promise<unknown>, successMessage: string) => {
+    if (selectedRowKeys.length === 0) return
+
+    setBulkActionLoading(true)
+    try {
+      await action()
+      message.success(successMessage)
+      setSelectedRowKeys([])
+      setBulkStatus(undefined)
+      setBulkOwner('')
+      await loadCustomers()
+    } catch (bulkError) {
+      console.error(bulkError)
+      message.error('Bulk action failed. Please try again.')
+    } finally {
+      setBulkActionLoading(false)
+    }
+  }
+
+  const handleBulkStatusUpdate = async () => {
+    if (!bulkStatus) {
+      message.warning('Select a status before applying a bulk update.')
+      return
+    }
+
+    const ids = selectedRowKeys.map(String)
+    const label = statusOptions.find(option => option.value === bulkStatus)?.label ?? bulkStatus
+    await runBulkAction(
+      () => bulkUpdateCustomerStatus(ids, bulkStatus),
+      `${ids.length} customers updated to ${label}`,
+    )
+  }
+
+  const handleBulkOwnerAssign = async () => {
+    const owner = bulkOwner.trim()
+    if (!owner) {
+      message.warning('Enter an owner name before assigning customers.')
+      return
+    }
+
+    const ids = selectedRowKeys.map(String)
+    await runBulkAction(
+      () => bulkAssignCustomerOwner(ids, owner),
+      `${ids.length} customers assigned to ${owner}`,
+    )
+  }
+
+  const handleBulkDelete = async () => {
+    const ids = selectedRowKeys.map(String)
+    await runBulkAction(
+      () => bulkDeleteCustomers(ids),
+      `${ids.length} customers deleted`,
+    )
   }
 
   const columns: ColumnsType<Customer> = [
@@ -189,9 +289,18 @@ const CustomersPage = () => {
           >
             Edit
           </Button>
-          <Button type="link" danger onClick={() => handleDelete(record)}>
-            Delete
-          </Button>
+          <Popconfirm
+            title="Delete this customer?"
+            description="This removes the customer profile and its activity timeline."
+            okText="Delete customer"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => handleDelete(record)}
+          >
+            <Button type="link" danger>
+              Delete
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -201,6 +310,7 @@ const CustomersPage = () => {
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
         <Form
+          form={filterForm}
           layout="inline"
           style={{ rowGap: 16, columnGap: 16, width: '100%' }}
           onFinish={values => {
@@ -212,6 +322,8 @@ const CustomersPage = () => {
                 ? [values.dateRange[0].toISOString(), values.dateRange[1].toISOString()]
                 : undefined,
             })
+            setSelectedRowKeys([])
+            setPagination(prev => ({ ...prev, current: 1 }))
           }}
         >
           <Form.Item name="keyword" label="Keyword">
@@ -243,13 +355,7 @@ const CustomersPage = () => {
               <Button type="primary" htmlType="submit">
                 Search
               </Button>
-              <Button
-                onClick={() => {
-                  setFilters({})
-                }}
-              >
-                Reset
-              </Button>
+              <Button onClick={resetFilters}>Reset</Button>
             </Space>
           </Form.Item>
         </Form>
@@ -258,32 +364,105 @@ const CustomersPage = () => {
       <Card
         title="Customers"
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setFormMode('create')
-              setSelectedCustomer(undefined)
-              setFormVisible(true)
-            }}
-          >
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateForm}>
             New Customer
           </Button>
         }
       >
-        <Table
-          rowKey="id"
-          loading={loading}
-          dataSource={paginatedData}
-          columns={columns}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: filteredCustomers.length,
-            showSizeChanger: true,
-            onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
-          }}
-        />
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          {error && (
+            <Alert
+              type="error"
+              showIcon
+              message={error}
+              action={
+                <Button size="small" icon={<ReloadOutlined />} onClick={loadCustomers}>
+                  Retry
+                </Button>
+              }
+            />
+          )}
+
+          {selectedRowKeys.length > 0 && (
+            <Alert
+              type="info"
+              showIcon
+              message={
+                <Space wrap style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Typography.Text strong>{selectedRowKeys.length} customers selected</Typography.Text>
+                  <Space wrap>
+                    <Select
+                      allowClear
+                      placeholder="New status"
+                      value={bulkStatus}
+                      options={statusOptions}
+                      style={{ width: 160 }}
+                      onChange={setBulkStatus}
+                    />
+                    <Button loading={bulkActionLoading} disabled={!bulkStatus} onClick={handleBulkStatusUpdate}>
+                      Update status
+                    </Button>
+                    <Input
+                      allowClear
+                      placeholder="Owner name"
+                      value={bulkOwner}
+                      style={{ width: 180 }}
+                      onChange={event => setBulkOwner(event.target.value)}
+                    />
+                    <Button loading={bulkActionLoading} disabled={!bulkOwner.trim()} onClick={handleBulkOwnerAssign}>
+                      Assign owner
+                    </Button>
+                    <Popconfirm
+                      title="Delete selected customers?"
+                      description={`This removes ${selectedRowKeys.length} customer records and their activity timelines.`}
+                      okText="Delete customers"
+                      cancelText="Cancel"
+                      okButtonProps={{ danger: true, loading: bulkActionLoading }}
+                      onConfirm={handleBulkDelete}
+                    >
+                      <Button danger icon={<DeleteOutlined />} loading={bulkActionLoading}>
+                        Delete selected
+                      </Button>
+                    </Popconfirm>
+                    <Button onClick={() => setSelectedRowKeys([])}>Clear selection</Button>
+                  </Space>
+                </Space>
+              }
+            />
+          )}
+
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={filteredCustomers}
+            columns={columns}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              getCheckboxProps: () => ({ disabled: bulkActionLoading }),
+            }}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: filteredCustomers.length,
+              showSizeChanger: true,
+              onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+            }}
+            locale={{
+              emptyText: (
+                <Empty description={hasActiveFilters ? 'No customers match these filters.' : 'No customers yet.'}>
+                  {hasActiveFilters ? (
+                    <Button onClick={resetFilters}>Clear filters</Button>
+                  ) : (
+                    <Button type="primary" icon={<PlusOutlined />} onClick={openCreateForm}>
+                      New Customer
+                    </Button>
+                  )}
+                </Empty>
+              ),
+            }}
+          />
+        </Space>
       </Card>
 
       {formVisible && (
@@ -302,9 +481,9 @@ const CustomersPage = () => {
                 message.success('Customer updated')
               }
               setFormVisible(false)
-              loadCustomers()
-            } catch (error) {
-              console.error(error)
+              await loadCustomers()
+            } catch (saveError) {
+              console.error(saveError)
               message.error('Failed to save customer. Please try again later.')
             }
           }}
@@ -326,4 +505,3 @@ const CustomersPage = () => {
 }
 
 export default CustomersPage
-

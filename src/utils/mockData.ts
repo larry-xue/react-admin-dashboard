@@ -1,9 +1,23 @@
 import { Customer, CustomerActivity, CustomerFormValues, CustomerSource, CustomerStatus } from '../views/customers/types'
-import type { Role, RoleDetail, Permission } from '../views/team/types'
+import type { Role, RoleDetail, Permission, RoleFormValues } from '../views/team/types'
 
 const sleep = (delay = 320) => new Promise(resolve => setTimeout(resolve, delay))
 
 const randomId = () => crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+const createActivity = (
+  customerId: string,
+  summary: string,
+  options: { actor?: string; type?: CustomerActivity['type']; statusAfter?: CustomerStatus } = {},
+): CustomerActivity => ({
+  id: `ACT-${randomId()}`,
+  customerId,
+  actor: options.actor ?? 'System',
+  type: options.type ?? 'note',
+  summary,
+  timestamp: new Date().toISOString(),
+  statusAfter: options.statusAfter,
+})
 
 const seededCustomers: Customer[] = [
   {
@@ -158,6 +172,56 @@ const roleSeeds: RoleDetail[] = [
 
 let roles = [...roleSeeds]
 
+const defaultPermissionTemplates: Array<Omit<Permission, 'id'>> = [
+  {
+    name: 'View Dashboard',
+    category: 'Analytics',
+    description: 'Read workspace health metrics and revenue charts.',
+    enabled: true,
+  },
+  {
+    name: 'View Customers',
+    category: 'CRM',
+    description: 'Read customer profiles, lifecycle status, and activity history.',
+    enabled: true,
+  },
+  {
+    name: 'Edit Customers',
+    category: 'CRM',
+    description: 'Create, edit, assign, and update customer records.',
+    enabled: false,
+  },
+  {
+    name: 'Invite Members',
+    category: 'Members',
+    description: 'Invite users and manage member access.',
+    enabled: false,
+  },
+  {
+    name: 'Edit Roles',
+    category: 'Access Control',
+    description: 'Create or update custom team roles.',
+    enabled: false,
+  },
+]
+
+const createDefaultPermissions = (): Permission[] =>
+  defaultPermissionTemplates.map(permission => ({
+    ...permission,
+    id: `perm-${randomId()}`,
+  }))
+
+const toRoleSummary = (role: RoleDetail): Role => ({
+  id: role.id,
+  name: role.name,
+  description: role.description,
+  status: role.status,
+  memberCount: role.memberCount,
+  permissionCount: role.permissionCount,
+  updatedAt: role.updatedAt,
+  owner: role.owner,
+})
+
 export interface DashboardStats {
   totalCustomers: number
   newCustomers: number
@@ -224,15 +288,10 @@ export const createCustomer = async (payload: CustomerFormValues): Promise<Custo
   }
   customers = [newCustomer, ...customers]
   activities = [
-    {
-      id: `ACT-${randomId()}`,
-      customerId: newCustomer.id,
-      actor: payload.owner ?? 'System',
-      type: 'note',
-      summary: 'Created a new customer record',
-      timestamp: newCustomer.createdAt,
+    createActivity(newCustomer.id, 'Created a new customer record', {
+      actor: payload.owner,
       statusAfter: payload.status,
-    },
+    }),
     ...activities,
   ]
   return newCustomer
@@ -253,19 +312,91 @@ export const updateCustomer = async (id: string, payload: Partial<CustomerFormVa
   customers[index] = updated
   if (payload.status && payload.status !== existing.status) {
     activities = [
-      {
-        id: `ACT-${randomId()}`,
-        customerId: updated.id,
-        actor: payload.owner ?? 'System',
+      createActivity(updated.id, `Status updated from ${existing.status} to ${payload.status}`, {
+        actor: payload.owner,
         type: 'deal',
-        summary: `Status updated from ${existing.status} to ${payload.status}`,
-        timestamp: updated.updatedAt as string,
         statusAfter: payload.status,
-      },
+      }),
       ...activities,
     ]
   }
   return updated
+}
+
+export const bulkUpdateCustomerStatus = async (ids: string[], status: CustomerStatus): Promise<Customer[]> => {
+  await sleep()
+  const idSet = new Set(ids)
+  const updatedCustomers: Customer[] = []
+  const nextActivities: CustomerActivity[] = []
+
+  customers = customers.map(customer => {
+    if (!idSet.has(customer.id)) return customer
+
+    const updated: Customer = {
+      ...customer,
+      status,
+      updatedAt: new Date().toISOString(),
+    }
+    updatedCustomers.push(updated)
+
+    if (customer.status !== status) {
+      nextActivities.push(createActivity(customer.id, `Bulk status update from ${customer.status} to ${status}`, {
+        actor: customer.owner ?? 'Bulk action',
+        type: 'deal',
+        statusAfter: status,
+      }))
+    }
+
+    return updated
+  })
+
+  if (updatedCustomers.length === 0) {
+    throw new Error('No customers found')
+  }
+
+  activities = [...nextActivities, ...activities]
+  return updatedCustomers
+}
+
+export const bulkAssignCustomerOwner = async (ids: string[], owner: string): Promise<Customer[]> => {
+  await sleep()
+  const idSet = new Set(ids)
+  const updatedCustomers: Customer[] = []
+
+  customers = customers.map(customer => {
+    if (!idSet.has(customer.id)) return customer
+
+    const updated: Customer = {
+      ...customer,
+      owner,
+      updatedAt: new Date().toISOString(),
+    }
+    updatedCustomers.push(updated)
+    return updated
+  })
+
+  if (updatedCustomers.length === 0) {
+    throw new Error('No customers found')
+  }
+
+  activities = [
+    ...updatedCustomers.map(customer =>
+      createActivity(customer.id, `Assigned owner to ${owner}`, {
+        actor: owner,
+        type: 'note',
+        statusAfter: customer.status,
+      }),
+    ),
+    ...activities,
+  ]
+  return updatedCustomers
+}
+
+export const bulkDeleteCustomers = async (ids: string[]): Promise<void> => {
+  await sleep()
+  const idSet = new Set(ids)
+  customers = customers.filter(customer => !idSet.has(customer.id))
+  activities = activities.filter(activity => !idSet.has(activity.customerId))
 }
 
 export const deleteCustomer = async (id: string): Promise<void> => {
@@ -281,21 +412,65 @@ export const getCustomerActivities = async (customerId: string): Promise<Custome
 
 export const getRoles = async (): Promise<Role[]> => {
   await sleep()
-  return roles.map(role => ({
-    id: role.id,
-    name: role.name,
-    description: role.description,
-    status: role.status,
-    memberCount: role.memberCount,
-    permissionCount: role.permissionCount,
-    updatedAt: role.updatedAt,
-    owner: role.owner,
-  }))
+  return roles.map(toRoleSummary)
 }
 
 export const getRoleDetail = async (roleId: string): Promise<RoleDetail | undefined> => {
   await sleep()
   return roles.find(role => role.id === roleId)
+}
+
+export const createRole = async (payload: RoleFormValues): Promise<RoleDetail> => {
+  await sleep()
+  const permissions = createDefaultPermissions()
+  const now = new Date().toISOString()
+  const role: RoleDetail = {
+    id: `ROL-${randomId()}`,
+    ...payload,
+    memberCount: 0,
+    permissionCount: permissions.filter(permission => permission.enabled).length,
+    updatedAt: now,
+    members: [],
+    permissions,
+    auditLog: [
+      {
+        id: `audit-${randomId()}`,
+        actor: payload.owner,
+        action: 'Created role',
+        timestamp: now,
+      },
+    ],
+  }
+
+  roles = [role, ...roles]
+  return role
+}
+
+export const updateRole = async (roleId: string, payload: RoleFormValues): Promise<RoleDetail> => {
+  await sleep()
+  const role = roles.find(roleEntry => roleEntry.id === roleId)
+  if (!role) {
+    throw new Error('Role not found')
+  }
+
+  const now = new Date().toISOString()
+  const updated: RoleDetail = {
+    ...role,
+    ...payload,
+    updatedAt: now,
+    auditLog: [
+      {
+        id: `audit-${randomId()}`,
+        actor: payload.owner,
+        action: 'Updated role details',
+        timestamp: now,
+      },
+      ...role.auditLog,
+    ],
+  }
+
+  roles = roles.map(roleEntry => (roleEntry.id === roleId ? updated : roleEntry))
+  return updated
 }
 
 export const updateRolePermissions = async (roleId: string, permissions: Permission[]): Promise<RoleDetail> => {
@@ -310,4 +485,3 @@ export const updateRolePermissions = async (roleId: string, permissions: Permiss
   roles = roles.map(roleEntry => (roleEntry.id === roleId ? role : roleEntry))
   return role
 }
-

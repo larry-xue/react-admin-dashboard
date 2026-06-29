@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Descriptions, Divider, Drawer, Space, Tag, Typography } from 'antd'
+import { useCallback, useEffect, useState } from 'react'
+import { Alert, Button, Descriptions, Divider, Drawer, Empty, Skeleton, Space, Tag, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import { Customer, CustomerStatus } from '../types'
 import { getCustomerActivities } from '../../../utils/mockData'
@@ -12,24 +12,33 @@ interface CustomerDetailProps {
 }
 
 const CustomerDetail = ({ customer, open, onClose, statusRender }: CustomerDetailProps) => {
+  const customerId = customer?.id
   const [activities, setActivities] = useState<
     { id: string; summary: string; actor: string; timestamp: string; statusAfter?: CustomerStatus }[]
   >([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>()
+
+  const loadActivities = useCallback(async () => {
+    if (!customerId) return
+
+    setLoading(true)
+    setError(undefined)
+    try {
+      const next = await getCustomerActivities(customerId)
+      setActivities(next)
+    } catch (loadError) {
+      console.error(loadError)
+      setError('Failed to load customer activity.')
+    } finally {
+      setLoading(false)
+    }
+  }, [customerId])
 
   useEffect(() => {
-    if (!customer?.id || !open) return
-    const load = async () => {
-      setLoading(true)
-      try {
-        const next = await getCustomerActivities(customer.id)
-        setActivities(next)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [customer?.id, open])
+    if (!open) return
+    loadActivities()
+  }, [loadActivities, open])
 
   return (
     <Drawer
@@ -61,9 +70,20 @@ const CustomerDetail = ({ customer, open, onClose, statusRender }: CustomerDetai
           <div>
             <Typography.Title level={5}>Activity Timeline</Typography.Title>
             {loading ? (
-              <Typography.Text type="secondary">Loading...</Typography.Text>
+              <Skeleton active paragraph={{ rows: 3 }} />
+            ) : error ? (
+              <Alert
+                type="error"
+                showIcon
+                message={error}
+                action={
+                  <Button size="small" onClick={loadActivities}>
+                    Retry
+                  </Button>
+                }
+              />
             ) : activities.length === 0 ? (
-              <Typography.Text type="secondary">No activity recorded yet.</Typography.Text>
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No activity recorded yet." />
             ) : (
               <Space direction="vertical" style={{ width: '100%' }}>
                 {activities.map(activity => (
@@ -94,4 +114,3 @@ const CustomerDetail = ({ customer, open, onClose, statusRender }: CustomerDetai
 }
 
 export default CustomerDetail
-

@@ -1,5 +1,12 @@
 export type RoleStatus = 'active' | 'pending' | 'deprecated'
 
+export interface RoleFormValues {
+  name: string
+  description: string
+  status: RoleStatus
+  owner: string
+}
+
 export interface Role {
   id: string
   name: string
@@ -29,4 +36,3 @@ export interface RoleDetail extends Role {
     timestamp: string
   }[]
 }
-
